@@ -1,32 +1,27 @@
-from lib.model import ScamSMSClassifier
 import torch
-from lib.dataset import ScamSMSDataset
-from data_util import download_and_load_data, save_model
-from config import config
-
-
-def load_data():
-    # Use dataset from Hugging Face
-    # data = load_dataset("ucirvine/sms_spam")
-    data = download_and_load_data()
-
-    # Use 90% for training and 10% for testing
-    dataset = data["train"].train_test_split(test_size=0.1)
-    train_data = dataset["train"]
-    test_data = dataset["test"]
-    mapped_train_data = train_data.map(lambda x: {"text": x["sms"], "label": x["label"]})
-    mapped_test_data = test_data.map(lambda x: {"text": x["sms"], "label": x["label"]})
-    return mapped_train_data, mapped_test_data
+from data_util import save_model, load_data
+from config import get_config
+from lib.model_provider import ModelProvider
 
 def main():
-    device = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    print("MPS Available:", torch.backends.mps.is_available())
+    print("MPS Built:", torch.backends.mps.is_built())
 
-    scam_sms_classifier = ScamSMSClassifier(config["vocab_size"], config["emb_dim"], config["hidden_dim"], config["num_classes"])
+    # device = torch.device("mps" if torch.mps.is_available() else "cpu")
+    device = "cpu"
+    torch.empty(1, device=device)  # Force MPS memory allocation
+
+    config = get_config()
+    model_version = config["model_version"]
+    dataset_version = config["dataset_version"]
+
+    model_provider = ModelProvider()
+    scam_sms_classifier = model_provider.get_model(model_version, config)
     scam_sms_classifier.set_device(device)
 
-    train_data, test_data = load_data()
-    scam_sms_classifier.start_train(train_data, config["epochs"])
-    save_model(scam_sms_classifier, "model.pth")
+    train_data, _ = load_data()
+    scam_sms_classifier.start_train(train_data, config["lr"], config["epochs"])
+    save_model(scam_sms_classifier, f"model_v{model_version}_v{dataset_version}.pth")
 
 
 if __name__ == '__main__':

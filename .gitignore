@@ -192,3 +192,4 @@ cython_debug/
 
 .penv
 text-classification/data
+text-classification/output
