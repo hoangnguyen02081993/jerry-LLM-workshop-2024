@@ -35,16 +35,16 @@ class ScamSMSClassifier(nn.Module):
     def create_data_set(self, data):
         return ScamSMSDataset(data, self.tokenizer)
     
-    def start_train(self, data, test_data, epochs=10):
+    def start_train(self, data, epochs=10):
         train_data_set = self.create_data_set(data)
-        train_loader = DataLoader(train_data_set, batch_size=2)
+        train_loader = DataLoader(train_data_set, batch_size=1)
 
         print("Training...")
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.0004, weight_decay=0.1)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.0001)
 
         self.train()
-        for _ in range(epochs):
+        for i in range(epochs):
             for texts, labels in train_loader:
                 optimizer.zero_grad()
                 outputs = self(texts)
@@ -52,9 +52,22 @@ class ScamSMSClassifier(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-        # self.eval()
-        # with torch.no_grad():
-        #     train_loss = self.calc_loss_loader(train_loader, self, self.device)
-        #     print("Train loss: ", train_loss)
+            print(f"Epoch: {i+1}/{epochs} completed")
+
+    def start_eval(self, data):
+        self.eval()
+        total = 0
+        correct = 0
+        with torch.no_grad():
+            for d in data:
+                texts, labels = d['text'], d['label']
+                token_ids = self.tokenizer.encode(texts)
+                outputs = self(torch.tensor(token_ids).unsqueeze(0).to(self.device))
+                total += 1
+                _, predicted = torch.max(outputs, 1)
+                print(f"With test {texts} predicted: {predicted} actual: {labels}")
+                correct += (predicted == labels).sum().item()
+
+        print(f"Accuracy: {correct / total  * 100}%")
 
         

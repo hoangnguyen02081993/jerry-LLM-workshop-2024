@@ -1,8 +1,6 @@
 from lib.model import ScamSMSClassifier
 import torch
-from lib.dataset import ScamSMSDataset
-from data_util import download_and_load_data, save_model
-from config import config
+from data_util import download_and_load_data
 
 
 def load_data():
@@ -19,14 +17,22 @@ def load_data():
     return mapped_train_data, mapped_test_data
 
 def main():
+    config = {
+        "vocab_size": 50257,
+        "emb_dim": 100,
+        "hidden_dim": 200,
+        "num_classes": 2,
+        "epochs": 10
+    }
+
     device = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
     scam_sms_classifier = ScamSMSClassifier(config["vocab_size"], config["emb_dim"], config["hidden_dim"], config["num_classes"])
     scam_sms_classifier.set_device(device)
+    scam_sms_classifier.load_state_dict(torch.load("output/model.pth"))
 
-    train_data, test_data = load_data()
-    scam_sms_classifier.start_train(train_data, config["epochs"])
-    save_model(scam_sms_classifier, "model.pth")
+    _, test_data = load_data()
+    scam_sms_classifier.start_eval(test_data)
 
 
 if __name__ == '__main__':

@@ -9,8 +9,8 @@ class ScamSMSDataset(Dataset):
         
         for _, d in enumerate(data):
             token_ids = self.tokenizer.encode(d['text'])
-            chunk = token_ids[max_length - len(token_ids)]
-            print(d['text'], chunk)
+            chunk = [0] * max_length
+            chunk[:len(token_ids)] = token_ids[:max_length]
             self.data.append({
                 'text': torch.tensor(chunk),
                 'label': d['label']

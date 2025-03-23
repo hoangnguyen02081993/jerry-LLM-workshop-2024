@@ -188,3 +188,7 @@ cython_debug/
 #.idea/
 
 !**/lib/
+
+
+.penv
+text-classification/data
