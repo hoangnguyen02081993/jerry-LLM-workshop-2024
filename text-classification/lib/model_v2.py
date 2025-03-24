@@ -104,7 +104,8 @@ class ScamSMSClassifierV2(IModel):
 
         with torch.no_grad():
             for d in data:
-                input_ids, attention_mask, labels = self.tokenizer(d['text'], truncation=True, padding="max_length", max_length=256, return_tensors="pt")['input_ids'], self.tokenizer(d['text'], truncation=True, padding="max_length", max_length=256, return_tensors="pt")
+                labels = d['label']
+                input_ids, attention_mask = self.encode(d['text'])
                 outputs = self(input_ids, attention_mask)
                 total += 1
                 _, predicted = torch.max(outputs, 1)
